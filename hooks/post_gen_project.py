@@ -8,7 +8,7 @@ from typing import Dict, List, Optional
 
 
 def initialize_env_variables(
-    env_file: str = ".env", env_file_template: str = ".env.template"
+    env_file: str = ".env", env_file_template: str = ".env.example"
 ) -> None:
     """Initialize the .env file"""
     shutil.copy(src=env_file_template, dst=env_file)
@@ -69,7 +69,7 @@ SETUP_COMMANDS: List[Query] = [
         prompt="Initializing git repository...",
         command="git init\n"
         "git add --all\n"
-        'git commit -m "Initialize project from nn-template={{ cookiecutter.__version }}"',
+        'git commit -m "Initialize project from deep-learning-template={{ cookiecutter.__version }}"',
         autorun=True,
     ),
     Query(

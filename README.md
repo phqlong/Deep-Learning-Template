@@ -30,6 +30,26 @@ _Suggestions are always welcome!_
 
 <br>
 
+## Get started
+
+If you already know [cookiecutter](https://github.com/cookiecutter/cookiecutter), just generate your project with:
+
+```bash
+cookiecutter https://github.com/grok-ai/nn-template
+```
+
+<details>
+<summary>Otherwise</summary>
+Cookiecutter manages the setup stages and delivers to you a personalized ready to run project. 
+
+Install it with:
+<pre><code>pip install cookiecutter
+</code></pre>
+</details>
+
+More details in the [documentation](https://grok-ai.github.io/nn-template/latest/getting-started/generation/).
+
+
 ## 📌  Introduction
 
 **Why you should use it:**
