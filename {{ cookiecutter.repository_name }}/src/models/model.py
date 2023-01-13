@@ -3,7 +3,7 @@ from typing import Any, List
 import torch
 from pytorch_lightning import LightningModule
 from torchmetrics import MaxMetric, MeanMetric
-from torchmetrics.classification.accuracy import Accuracy
+from torchmetrics import Accuracy, F1Score, Precision, Recall
 
 
 class MNISTLitModule(LightningModule):
@@ -26,6 +26,7 @@ class MNISTLitModule(LightningModule):
         net: torch.nn.Module,
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler,
+        num_classes: int,
     ):
         super().__init__()
 
@@ -33,15 +34,24 @@ class MNISTLitModule(LightningModule):
         # also ensures init params will be stored in ckpt
         self.save_hyperparameters(logger=False)
 
+        # Save net model to caculate self.parameters() in configure_optimizers
         self.net = net
 
         # loss function
         self.criterion = torch.nn.CrossEntropyLoss()
 
         # metric objects for calculating and averaging accuracy across batches
-        self.train_acc = Accuracy(task="multiclass", num_classes=10)
-        self.val_acc = Accuracy(task="multiclass", num_classes=10)
-        self.test_acc = Accuracy(task="multiclass", num_classes=10)
+        self.train_acc = Accuracy(task="multiclass", num_classes=num_classes)
+        self.val_acc = Accuracy(task="multiclass", num_classes=num_classes)
+        self.test_acc = Accuracy(task="multiclass", num_classes=num_classes)
+
+        self.val_f1 = F1Score(task="multiclass", average="weighted", num_classes=num_classes)
+        self.val_precision = Precision(task="multiclass", average="weighted", num_classes=num_classes)
+        self.val_recall = Recall(task="multiclass", average="weighted", num_classes=num_classes)
+
+        self.test_f1 = F1Score(task="multiclass", average="weighted", num_classes=num_classes)
+        self.test_precision = Precision(task="multiclass", average="weighted", num_classes=num_classes)
+        self.test_recall = Recall(task="multiclass", average="weighted", num_classes=num_classes)
 
         # for averaging loss across batches
         self.train_loss = MeanMetric()
@@ -83,8 +93,8 @@ class MNISTLitModule(LightningModule):
     def training_epoch_end(self, outputs: List[Any]):
         # `outputs` is a list of dicts returned from `training_step()`
 
-        # Warning: when overriding `training_epoch_end()`, lightning accumulates outputs from all batches of the epoch
-        # this may not be an issue when training on mnist
+        # Warning: when overriding `training_epoch_end()`, lightning accumulates outputs from 
+        # all batches of the epoch this may not be an issue when training on mnist
         # but on larger datasets/models it's easy to run into out-of-memory errors
 
         # consider detaching tensors before returning them from `training_step()`
@@ -96,16 +106,22 @@ class MNISTLitModule(LightningModule):
         loss, preds, targets = self.model_step(batch)
 
         # update and log metrics
-        self.val_loss(loss)
-        self.val_acc(preds, targets)
-        self.log("val/loss", self.val_loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("val/acc", self.val_acc, on_step=False, on_epoch=True, prog_bar=True)
+        val_loss = self.val_loss(loss)
+        val_acc = self.val_acc(preds, targets)
+        val_f1 = self.val_f1(preds, targets)
+        val_precision = self.val_precision(preds, targets)
+        val_recall = self.val_recall(preds, targets)
+        self.log("val/loss", val_loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/acc", val_acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/f1", val_f1, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/precision", val_precision, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/recall", val_recall, on_step=False, on_epoch=True, prog_bar=True)
 
         return {"loss": loss, "preds": preds, "targets": targets}
 
     def validation_epoch_end(self, outputs: List[Any]):
-        acc = self.val_acc.compute()  # get current val acc
-        self.val_acc_best(acc)  # update best so far val acc
+        epoch_acc = self.val_acc.compute()  # get current val acc, last acc of epoch
+        self.val_acc_best(epoch_acc)  # update best so far val acc
         # log `val_acc_best` as a value through `.compute()` method, instead of as a metric object
         # otherwise metric would be reset by lightning after each epoch
         self.log("val/acc_best", self.val_acc_best.compute(), prog_bar=True)
@@ -114,10 +130,16 @@ class MNISTLitModule(LightningModule):
         loss, preds, targets = self.model_step(batch)
 
         # update and log metrics
-        self.test_loss(loss)
-        self.test_acc(preds, targets)
-        self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
-        self.log("test/acc", self.test_acc, on_step=False, on_epoch=True, prog_bar=True)
+        test_loss = self.test_loss(loss)
+        test_acc = self.test_acc(preds, targets)
+        test_f1 = self.test_f1(preds, targets)
+        test_precision = self.test_precision(preds, targets)
+        test_recall = self.test_recall(preds, targets)
+        self.log("test/loss", test_loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("test/acc", test_acc, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("test/f1", test_f1, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("test/precision", test_precision, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("test/recall", test_recall, on_step=False, on_epoch=True, prog_bar=True)
 
         return {"loss": loss, "preds": preds, "targets": targets}
 
@@ -131,6 +153,7 @@ class MNISTLitModule(LightningModule):
         Examples:
             https://pytorch-lightning.readthedocs.io/en/latest/common/lightning_module.html#configure-optimizers
         """
+        # Lr and weight_decay are partially initialized in hydra.utils.instantiate(cfg.model)
         optimizer = self.hparams.optimizer(params=self.parameters())
         if self.hparams.scheduler is not None:
             scheduler = self.hparams.scheduler(optimizer=optimizer)
@@ -152,5 +175,5 @@ if __name__ == "__main__":
     import pyrootutils
 
     root = pyrootutils.setup_root(__file__, pythonpath=True)
-    cfg = omegaconf.OmegaConf.load(root / "configs" / "model" / "mnist.yaml")
+    cfg = omegaconf.OmegaConf.load(root / "configs" / "model" / "default.yaml")
     _ = hydra.utils.instantiate(cfg)

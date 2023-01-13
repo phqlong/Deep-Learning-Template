@@ -40,7 +40,7 @@ class MNISTDataModule(LightningDataModule):
         data_dir: str = "data/",
         train_val_test_split: Tuple[int, int, int] = (55_000, 5_000, 10_000),
         batch_size: int = 64,
-        num_workers: int = 0,
+        num_workers: int = 2,
         pin_memory: bool = False,
     ):
         super().__init__()
@@ -51,7 +51,8 @@ class MNISTDataModule(LightningDataModule):
 
         # data transformations
         self.transforms = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+            [transforms.ToTensor(), 
+             transforms.Normalize((0.1307,), (0.3081,))]
         )
 
         self.data_train: Optional[Dataset] = None
@@ -133,6 +134,6 @@ if __name__ == "__main__":
     import pyrootutils
 
     root = pyrootutils.setup_root(__file__, pythonpath=True)
-    cfg = omegaconf.OmegaConf.load(root / "configs" / "datamodule" / "mnist.yaml")
+    cfg = omegaconf.OmegaConf.load(root / "configs" / "datamodule" / "default.yaml")
     cfg.data_dir = str(root / "data")
     _ = hydra.utils.instantiate(cfg)

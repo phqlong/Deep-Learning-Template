@@ -3,11 +3,11 @@ from pathlib import Path
 import pytest
 import torch
 
-from src.datamodules.mnist_datamodule import MNISTDataModule
+from src.datamodules import MNISTDataModule
 
 
 @pytest.mark.parametrize("batch_size", [32, 128])
-def test_mnist_datamodule(batch_size):
+def test_datamodule(batch_size):
     data_dir = "data/"
 
     dm = MNISTDataModule(data_dir=data_dir, batch_size=batch_size)
