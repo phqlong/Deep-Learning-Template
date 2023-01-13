@@ -139,19 +139,19 @@ SETUP_COMMANDS: List[Query] = [
             Dependency(id="git_remote", expected=True),
         ],
     ),
-    Query(
-        id="conda_activate",
-        interactive=False,
-        default=True,
-        prompt="Activate your conda environment with:",
-        command="cd {{ cookiecutter.repository_name }}\n"
-        "conda activate {{ cookiecutter.conda_env_name }}\n"
-        "pytest -v",
-        autorun=False,
-        dependencies=[
-            Dependency(id="conda_env", expected=True),
-        ],
-    ),
+    # Query(
+    #     id="conda_activate",
+    #     interactive=False,
+    #     default=True,
+    #     prompt="Activate your conda environment with:",
+    #     command="cd {{ cookiecutter.repository_name }}\n"
+    #     "conda activate {{ cookiecutter.conda_env_name }}\n"
+    #     "pytest -v",
+    #     autorun=False,
+    #     dependencies=[
+    #         Dependency(id="conda_env", expected=True),
+    #     ],
+    # ),
 ]
 
 
