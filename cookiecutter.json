@@ -1,0 +1,13 @@
+{
+    "author": "Phan Long",
+    "author_email": "phqlong2810@gmail.com",
+    "github_user": "phqlong",
+    "project_name": "Deep Learning Project",
+    "project_description": "A new awesome project.",
+    "repository_name": "{{ cookiecutter.project_name.strip().lower().replace(' ', '-') }}",
+    "package_name": "{{ cookiecutter.project_name.strip().lower().replace(' ', '-').replace('-', '_') }}",
+    "repository_url": "https://github.com/{{ cookiecutter.github_user }}/{{ cookiecutter.project_name.strip().lower().replace(' ', '-') }}",
+    "conda_env_name": "{{ cookiecutter.project_name.strip().lower().replace(' ', '-') }}",
+    "python_version": "3.9",
+    "__version": "1.0.0"
+}
