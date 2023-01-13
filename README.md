@@ -35,7 +35,7 @@ _Suggestions are always welcome!_
 If you already know [cookiecutter](https://github.com/cookiecutter/cookiecutter), just generate your project with:
 
 ```bash
-cookiecutter https://github.com/grok-ai/nn-template
+cookiecutter https://github.com/phqlong/Deep-Learning-Template
 ```
 
 <details>
