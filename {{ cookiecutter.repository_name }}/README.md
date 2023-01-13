@@ -6,6 +6,7 @@
 Project Organization
 ------------
 
+```
 ├── configs                   <- Hydra configuration files
 │   ├── callbacks                <- Callbacks configs
 │   ├── datamodule               <- Datamodule configs
@@ -51,6 +52,7 @@ Project Organization
 ├── requirements.txt          <- File for installing python dependencies
 ├── setup.py                  <- File for installing project as a package
 └── README.md
+```
 
 --------
 
