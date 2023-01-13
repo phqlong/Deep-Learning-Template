@@ -1,6 +1,7 @@
 import shutil
 import subprocess
 import sys
+import os
 import textwrap
 from dataclasses import dataclass, field
 from distutils.util import strtobool
@@ -66,38 +67,21 @@ SETUP_COMMANDS: List[Query] = [
         id="git_init",
         interactive=True,
         default=True,
-        prompt="Initializing git repository...",
+        prompt="Initializing git repository...\n"
+        "Adding an existing git remote...\n(You should create the remote from the web UI before proceeding!)\n"
+        "Pushing default branch to existing remote...",
         command="git init\n"
         "git add --all\n"
-        'git commit -m "Initialize project from deep-learning-template={{ cookiecutter.__version }}"',
+        'git commit -m "Initialize project from deep-learning-template={{ cookiecutter.__version }}"\n'
+        "git branch -M master\n"
+        "git remote add origin git@github.com:{{ cookiecutter.github_user }}/{{ cookiecutter.repository_name }}.git\n"
+        "git push -u origin HEAD",
         autorun=True,
-    ),
-    Query(
-        id="git_remote",
-        interactive=True,
-        default=True,
-        prompt="Adding an existing git remote...\n(You should create the remote from the web UI before proceeding!)",
-        command="git remote add origin git@github.com:{{ cookiecutter.github_user }}/{{ cookiecutter.repository_name }}.git",
-        autorun=True,
-        dependencies=[
-            Dependency(id="git_init", expected=True),
-        ],
-    ),
-    Query(
-        id="git_push_main",
-        interactive=True,
-        default=True,
-        prompt="Pushing default branch to existing remote...",
-        command="git push -u origin HEAD",
-        autorun=True,
-        dependencies=[
-            Dependency(id="git_remote", expected=True),
-        ],
     ),
     Query(
         id="conda_env",
         interactive=True,
-        default=True,
+        default=False,
         prompt="Creating conda environment...",
         command="conda env create -f env.yaml",
         autorun=True,
@@ -139,19 +123,27 @@ SETUP_COMMANDS: List[Query] = [
             Dependency(id="git_remote", expected=True),
         ],
     ),
-    # Query(
-    #     id="conda_activate",
-    #     interactive=False,
-    #     default=True,
-    #     prompt="Activate your conda environment with:",
-    #     command="cd {{ cookiecutter.repository_name }}\n"
-    #     "conda activate {{ cookiecutter.conda_env_name }}\n"
-    #     "pytest -v",
-    #     autorun=False,
-    #     dependencies=[
-    #         Dependency(id="conda_env", expected=True),
-    #     ],
-    # ),
+    Query(
+        id="conda_activate",
+        interactive=False,
+        default=True,
+        prompt="Activate your conda environment with:",
+        command="cd {{ cookiecutter.repository_name }}\n"
+        "conda activate {{ cookiecutter.conda_env_name }}\n"
+        "pytest -v",
+        autorun=False,
+        dependencies=[
+            Dependency(id="conda_env", expected=True),
+        ],
+    ),
+    Query(
+        id="vscode",
+        interactive=True,
+        default=True,
+        prompt="Open new project: {{ cookiecutter.repository_name }} in VSCode immediately...",
+        command="code "+os.getcwd(),
+        autorun=True,
+    ),
 ]
 
 
@@ -192,12 +184,13 @@ def setup(setup_commands) -> None:
 
             if answers[query.id] and (query.interactive or query.autorun):
                 try:
-                    subprocess.run(
-                        query.command,
-                        check=True,
-                        text=True,
-                        shell=True,
-                    )
+                    for q in query.command.split("\n"):
+                        subprocess.run(
+                            q,
+                            check=True,
+                            text=True,
+                            shell=True,
+                        )
                 except subprocess.CalledProcessError:
                     answers[query.id] = False
             print()
